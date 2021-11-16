@@ -1,20 +1,21 @@
 package challenges;
 
-import org.apache.http.auth.AuthenticationException;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import utilities.Utilities;
 
 import java.io.IOException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,30 +24,25 @@ import static utilities.URLs.*;
 
 
 public class ChallengesOrganizer {
-
     private ChallengesOrganizer() {
         throw new AssertionError();
     }
 
-    public static List<Challenge> extractChallengesList() throws IOException, InterruptedException {
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = Utilities.createAuthenticatedRequest(challengesURI);
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
+    public static List<Challenge> extractChallengesList() throws IOException {
+        HttpClient client = HttpClients.createDefault();
+        HttpUriRequest request = Utilities.createAuthenticatedGetRequest(challengesURI);
+        HttpResponse response = client.execute(request);
 
         List<Challenge> list = new ArrayList<>();
-        JSONObject obj = new JSONObject(response.body());
+        HttpEntity entity = response.getEntity();
+        String content = EntityUtils.toString(entity);
+        JSONObject obj = new JSONObject(content);
+
         JSONArray in = obj.getJSONArray("in");
-        for (int i = 0; i < in.length(); i++) {
-            JSONObject challengeObject = (JSONObject) in.get(i);
-            list.add(new Challenge(challengeObject));
-        }
+        in.forEach(x -> list.add(new Challenge((JSONObject) x)));
 
         JSONArray out = obj.getJSONArray("out");
-        for (int i = 0; i < out.length(); i++) {
-            JSONObject challengeObject = (JSONObject) out.get(i);
-            list.add(new Challenge(challengeObject));
-        }
+        out.forEach(x -> list.add(new Challenge((JSONObject) x)));
 
         return list;
     }
@@ -57,7 +53,6 @@ public class ChallengesOrganizer {
         httpPost.setHeader("Authorization", " Bearer " + token);
         CloseableHttpResponse response = client.execute(httpPost);
         client.close();
-        System.out.println(response.getStatusLine());
         return response.getStatusLine().getStatusCode();
     }
 
@@ -93,10 +88,8 @@ public class ChallengesOrganizer {
         return response.getStatusLine().getStatusCode();
     }
 
-    public static void acceptFirstChallenge() throws AuthenticationException, IOException, InterruptedException {
+    public static void acceptFirstChallenge() throws IOException {
         List<Challenge> activeChallenges = ChallengesOrganizer.extractChallengesList();
-        System.out.println(activeChallenges);
-        System.out.println(activeChallenges.get(0).getId());
         ChallengesOrganizer.acceptChallenge(activeChallenges.get(0).getId());
     }
 }

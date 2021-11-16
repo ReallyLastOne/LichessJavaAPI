@@ -1,15 +1,18 @@
 package board;
 
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import utilities.Utilities;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.io.InputStreamReader;
 
+import static secret.Token.token;
 import static utilities.URLs.eventStreamURL;
 import static utilities.URLs.makeAMoveURL;
 
@@ -19,19 +22,34 @@ public class BoardOrganizer {
         throw new AssertionError();
     }
 
-    public static void streamIncomingEvents() throws IOException, InterruptedException { // doesnt work
-        HttpClient client = HttpClient.newHttpClient();
+    public static void streamIncomingEvents() throws IOException {
+        CloseableHttpClient client = HttpClients.createDefault();
+        HttpUriRequest request = Utilities.createAuthenticatedGetRequest(eventStreamURL);
 
-        HttpRequest request = Utilities.createAuthenticatedRequest(eventStreamURL);
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        try (var stream = client.execute(request).getEntity().getContent()) {
+            var buffered = new BufferedReader(new InputStreamReader(new BufferedInputStream(stream)));
+            while (true) {
+                String value = buffered.readLine();
+                if (!value.isBlank()) {
+                    System.out.println(value);
+                }
+            }
+        }
     }
 
-    public static boolean makeABoardMove(String gameId, String move) throws IOException { // not tested
-        URL url = new URL(makeAMoveURL.replace("{gameId}", gameId).replace("{move}", move));
-        URLConnection con = url.openConnection();
-        HttpURLConnection http = (HttpURLConnection) con;
-        http.setRequestMethod("POST");
-        http.setDoOutput(true);
-        return false;
+    public static int makeABotMove(String gameId, String move) throws IOException { // not tested
+        return makeABotMove(gameId, move, false);
+    }
+
+    public static int makeABotMove(String gameId, String move, boolean offeringDraw) throws IOException {
+        CloseableHttpClient client = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(makeAMoveURL.replace("{gameId}", gameId).replace("{move}", move)
+                + "?offeringDraw=" + Boolean.valueOf(offeringDraw).toString());
+        httpPost.setHeader("Authorization", "Bearer " + token);
+
+        CloseableHttpResponse response = client.execute(httpPost);
+        client.close();
+
+        return response.getStatusLine().getStatusCode();
     }
 }

@@ -1,13 +1,16 @@
 package games;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import utilities.Utilities;
 
 import java.io.IOException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,12 +22,14 @@ public class GamesOrganizer {
     }
 
     public static List<Game> extractOngoingGames() throws IOException, InterruptedException {
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = Utilities.createAuthenticatedRequest(ongoingGames);
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpClient client = HttpClients.createDefault();
+        HttpUriRequest request = Utilities.createAuthenticatedGetRequest(ongoingGames);
+        HttpResponse response = client.execute(request);
 
         List<Game> list = new ArrayList<>();
-        JSONObject obj = new JSONObject(response.body());
+        HttpEntity entity = response.getEntity();
+        String content = EntityUtils.toString(entity);
+        JSONObject obj = new JSONObject(content);
         JSONArray in = obj.getJSONArray("nowPlaying");
 
         for (int i = 0; i < in.length(); i++) {
