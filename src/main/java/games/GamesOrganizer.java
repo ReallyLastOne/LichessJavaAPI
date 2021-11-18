@@ -3,7 +3,9 @@ package games;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
@@ -14,7 +16,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static utilities.URLs.ongoingGames;
+import static secret.Token.token;
+import static utilities.URLs.*;
 
 public class GamesOrganizer {
     private GamesOrganizer() {
@@ -38,5 +41,21 @@ public class GamesOrganizer {
         }
 
         return list;
+    }
+
+    public static int abortGame(String id) throws IOException {
+        CloseableHttpClient client = HttpClients.createDefault();
+        HttpPost request = new HttpPost(abortGame.replace("{gameId}", id));
+        request.setHeader("Authorization", " Bearer " + token);
+        HttpResponse response = client.execute(request);
+        return response.getStatusLine().getStatusCode();
+    }
+
+    public static int resignAGame(String id) throws IOException {
+        CloseableHttpClient client = HttpClients.createDefault();
+        HttpPost request = new HttpPost(resignAGame.replace("{gameId}", id));
+        request.setHeader("Authorization", " Bearer " + token);
+        HttpResponse response = client.execute(request);
+        return response.getStatusLine().getStatusCode();
     }
 }

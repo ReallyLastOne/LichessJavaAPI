@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 @Getter
 @ToString
+public
 class Game {
     private String fullId;
     private String gameId;

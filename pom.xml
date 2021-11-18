@@ -13,6 +13,13 @@
         <maven.compiler.target>15</maven.compiler.target>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.json/json -->
         <dependency>
@@ -32,7 +39,11 @@
             <artifactId>httpclient</artifactId>
             <version>4.5.13</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.github.ReallyLastOne</groupId>
+            <artifactId>Chess</artifactId>
+            <version>Tag</version>
+        </dependency>
     </dependencies>
 
 
